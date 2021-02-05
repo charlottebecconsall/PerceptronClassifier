@@ -1,0 +1,106 @@
+Assignment 1: Python/Numpy + MNIST Neural Network
+Due Friday, 31/07/20 at 11:59pm
+
+A precocious toddler known for finishing first at the Fortnite World Cup 2020 has just arrived at UC, but is having trouble understanding lectures and any handwritten notes because the only symbols they recognize are in Burbank Big Condensed Black font. They wonder: was Fortnite just a social construct used to limit free thought and ensure social order? They want to learn more about the outside world, specifically the content of their MATH102 course but don't know how to recognize any digits. Can you help them build a classifier to recognize some digits?
+
+In this assignment you have 3 parts to complete:
+
+Complete the the python/numpy review notebook 
+Code a single-layer neural network to classify handwritten digits using only NumPy. You will not be using TensorFlow, or any other deep learning framework, for this assignment. You must follow the structure of the code stencil to receive credit.
+Answer some conceptual questions in your README.txt file.
+
+Please read this writeup in its entirety before beginning the assignment. Zip and upload your full solution for all 3 parts to learn as your submission. The web interface to google drive (https://drive.google.com/) allows you to download a folder as a zip file so this is probably the easiest way to export a folder.
+Part 1
+Create a folder on your google drive for assignment1 and place in it a copy of the notebook here:
+https://colab.research.google.com/drive/1kSHni0qqYydEETuGignc-3E4sCMK3qmn
+
+Complete the TODO section towards the end and make sure that your python_numpy.ipynb is included in your zip submission.
+Part 2
+Getting the Stencil (template, skeleton, stub, etc etc :) )
+You can find the files located on learn under the Assignments page. The files are compressed into a ZIP file, and to unzip the ZIP file, you can just double click on the ZIP file. There should be the files: assignment.py, preprocess.py, README.txt, and MNIST_data folder. Place these in your google drive folder for assignment1 to get started.
+Logistics
+Work on this assignment off of the stencil code provided, but do not change the stencil except where specified. You shouldn't change any method signatures or add any trainable parameters to init that we don't give you (other instance variables are fine).
+
+Make sure that you are using Python version 3.7+ on assignments. This assignment also requires the NumPy and Matplotlib packages. All of these are pre-installed on Colab. You can upload the included files to Google Drive and then in Colab create a notebook and call your code. Using my drive folder locations, this is the starting code running:
+and after swapping in an acceptable reference solution:
+You can edit the python files directly in colab (double click on them) and then re-run the cell that reloads the assignment module file and runs your main function. 
+Assignment Roadmap
+Your task is a multi-classification problem, you will build a one layer neural network to take an image of a handwritten digit and predict its class. This roadmap walks you through the pipeline of training a neural net, including the structure of the model class and the methods you will have to fill in. Our stencil provides a model class with several methods and hyperparameters you need to use for your network. We also have provided some small unit tests in assignment_tests.py -- these are not exhaustive so use them only as a baseline. 
+Algorithm overview
+Review your lecture notes for the Single Perceptron Learning Algorithm. In our lecture example we built and trained an “Is it 2?” perceptron. Here is a brief recap.
+ 
+Forward pass: f(x) = output = w1∙x1+w2∙x2+b
+Back propagation: y = expected - (f(x)>0),   ∆w1=y∙x1,   ∆w2=y∙x2,   ∆b=y∙1
+Gradient descent: w1=w1+λ∙∆w1,   w2=w2+λ∙∆w2,   b=b+λ∙∆b 
+
+Where λ is the learning rate and ∆ indicates a gradient. In our worked example λ was 1. 
+
+We extended this for learning in batches by summing the gradients in back propagation of all k images in a batch and taking the average. This is a minor change:
+
+Back propagation: yk = expected - (f(xk)>0),   ∆wk1=yk∙xk1,   ∆wk2=yk∙xk2,   ∆bk=yk∙1,
+∆w1=1nk=0n∆w1k,   ∆w2=1nk=0n∆w2k,   ∆b=1nk=0n∆bk
+
+To turn this into a Multiclass Perceptron Learning Algorithm we duplicate the model for each class:
+ 
+The algorithm does not change for this extension but we must be more careful with how we compute y since we now have a y for each of our 10 perceptrons. To understand the change, the original formula, y = expected - (f(x)>0), resulted in three possible outcomes:
+y = 	+1 if we expected 1 and f(x)>0 is 0
+	-1 if we expected 0 and f(x)>0 is 1
+	0 otherwise
+This means in two cases we have a gradient update and one case we multiply everything by zero and have no update. With multiple perceptrons, we adjust the definition of y so that y belongs to a class:
+yc =	+1 if expected == c and argmax(f(x)) != c
+-1 if expected != c and argmax(f(x)) == c
+0 otherwise
+We then update each perceptron from all inputs in the batch using its own yc
+Implementation
+Step 1. Preprocess the data
+Before training a network, you need to clean your data. This includes retrieving the data, altering the data, and formatting them into the inputs for your network. For this assignment, you will be working on the MNIST dataset (see more detailed explanation of MNIST below). MNIST is a dataset containing of images of handwritten digits (0 - 9). You want the inputs for your model to be batch size of images, where each image is a 28 x 28 matrix of pixel values.
+In preprocessing.py, we have provided you with a get_data(inputs_file_path, labels_file_path, num_examples) method that you will have to fill in.
+Please normalize the pixel values.
+Step 2. Fill in your model
+Your next step should be to fill out the methods in the model, including all of the TODOs listed in assignment.py. This entails setting your hyperparameters and trainable parameters within the constructor of the model class, filling out the call function (forward pass), doing back propagation + gradient descent (the Perceptron Learning Algorithm), and writing a function to calculate your model's accuracy.
+You should initialize all hyperparameters and trainable parameters in the constructor of the class. Hyperparameters are typically not members of the model class, but doing this is necessary so that when we run your model, we use the exact same hyperparameters you did. Trainable parameters are modified through and through the entirety of training the model (that's what the model is learning!) so it makes sense to initialize this in the model class.
+You should NOT edit the constructor of the Model class to take in any arguments. As mentioned above, everything should be initialized (hard coded) in the constructor.
+You should also fill out the model's gradient_descent(self, gradW, gradB) method. Generally, optimizations of the model's parameters are done outside of the model, but we simplify it in this assignment.
+You will then initialize an instance of your model class in the main function, train your model by doing the forward pass and backward pass many times (call then back_progagate then descent), and the test your model using the testing data and the accuracy function.
+Step 3. Train and test
+In the main function, you will want to get your train and test data, initialize your model, and train it for one epoch. An epoch consists of going through the entirety of the training set once. We have provided for you a train and test method. The train method will take in the model and do the forward and backward pass for one epoch.
+The test method will take in the same model, now with trained parameters, and return the accuracy given the test data and test labels.
+At the very end, we have written a method for you to visualize your results.
+Model Parameters
+Take batch size images of 784 values as input (784 values representing the 28x28 image) and output the probabilities for each image belonging to each of the 10 class labels (one class for each digit from 0-9 for each image).
+Have a total of 7850 parameters per image. These are the weights and the biases for each of the 10 perceptrons. All parameters should be initialized to 0.
+Train your network on all 60,000 training examples with a learning rate of 0.5.
+We recommend using a batch size of 100. 
+Data
+As mentioned above, you will be using the MNIST dataset to train and test your network. The dataset can be found here: http://yann.lecun.com/exdb/mnist/ , but we have also provided it to you within the ZIP file.
+The training data contains 60,000 examples broken into two files: one file contains the image pixel data and the other contains the class label.
+You should train your network using only the training data and then test your network's accuracy on the testing data. Your program should print its accuracy over the test dataset upon completion.
+Reading in the Data
+The MNIST data files are gzipped. You can use the gzip library to read these files from Python.
+To open a gzipped file from Python you can use the following code:
+
+import gzip
+gz_filename = ...
+with gzip.open(gz_filename, 'rb') as f:
+  buffer = f.read(...)
+  # buffer contains ... number of bytes from the file
+  # If you use f.read(n) twice,
+  # the first call reads the first n bytes, the second reads the second n bytes
+           
+You might find the function numpy.frombuffer (https://docs.scipy.org/doc/numpy/reference/generated/numpy.frombuffer.html) helpful to convert from a buffer of bytes to a NumPy array.
+
+Note: You should normalize the pixel values so that they range from 0 to 1 (This can easily be done by dividing each pixel value by 255) to avoid any numerical overflow issues. Each pixel is exactly 1 byte.
+Data format
+The testing and training data are in the following format:
+
+train-images-idx3-ubyte.gz: 16 byte header (which you can ignore) followed by 60,000 training images. A training example consists of 784 single-byte integers (from 0-255) which represent pixel intensities. You will want to read the 16 byte header and then save the rest of the data as the actual training inputs.
+
+train-labels-idx1-ubyte.gz: 8 byte header (which you can ignore) followed by 60,000 training labels. A training label consists of single-byte integers from 0-9 representing the class label. You will want to read the 8 byte header and then save the rest of the data as the actual training labels.
+
+t10k-images-idx3-ubyte.gz: 16 byte header (which you can ignore) followed by 10,000 testing images. You will want to read the 16 byte header and then save the rest of the data as the actual testing inputs.
+
+t10k-labels-idx1-ubyte.gz: 8 byte header (which you can ignore) followed by 10,000 testing labels. You will want to read the 8 byte header and then save the rest of the data as the actual training labels.
+
+Note: You can use the data type np.uint8 for single-byte (or 8-bit) integers. You may have to convert to np.float32 when preprocessing to normalize the data.
+Visualizing Results
+We've provided the visualizeresults(imagedata, probabilities, imagelabels) method for you to visualize your predictions against the true labels using matplotlib, a useful Python library for plotting graphs. This method is currently written with the labels having a shape of [number of images, 1]. DO NOT EDIT THIS FUNCTION. You should call this function after training and testing on a set of 10 test images. This should result in a visual of 10 images with your predictions and the actual label written above so you can compare your results! You should do this last, after you are sure you have met the benchmark for test accuracy.
